@@ -150,6 +150,9 @@ class StaticSiteMirrorApp(App):
                     
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
+                elif file.endswith('.html.orig'):
+                    os.remove(file_path)
+                    
         self.delete_orig_files()
         self.status_label.text = 'Úprava dokončena!'
         self.progress.value = 100
