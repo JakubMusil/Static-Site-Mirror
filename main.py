@@ -116,6 +116,15 @@ class StaticSiteMirrorApp(App):
         popup = Popup(title='Vyber složku', content=content, size_hint=(0.9, 0.9))
         popup.open()
 
+
+    def delete_orig_files(self):
+        self.status_label.text = 'Odstraňuji .html.orig soubory...'
+        for root, _, files in os.walk(self.selected_folder):
+            for file in files:
+                if file.endswith('.html.orig'):
+                    os.remove(os.path.join(root, file))
+        self.status_label.text = 'Odstranění dokončeno!'
+    
     def modify_html_files(self):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
@@ -134,7 +143,7 @@ class StaticSiteMirrorApp(App):
                     
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
-        
+        self.delete_orig_files()
         self.status_label.text = 'Úprava dokončena!'
         self.progress.value = 100
 
