@@ -54,6 +54,29 @@ class StaticSiteMirrorApp(App):
         self.selected_folder = ''
         return self.layout
 
+    def open_file_chooser(self, instance):
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        file_chooser = FileChooserListView(size_hint=(1, 0.8), dirselect=True)
+        confirm_button = Button(text='Potvrdit složku', size_hint=(1, 0.2))
+        
+        def confirm_selection(instance):
+            if file_chooser.selection:
+                selected = file_chooser.selection[0]
+                if not has_write_permissions(selected):
+                    self.status_label.text = 'Chyba: Nemáš práva pro zápis do této složky!'
+                else:
+                    self.selected_folder = selected
+                    self.status_label.text = f'Vybraná složka: {self.selected_folder}'
+                    self.select_folder_button.text = f'Složka: {os.path.basename(self.selected_folder)}'
+                    popup.dismiss()
+        
+        confirm_button.bind(on_press=confirm_selection)
+        content.add_widget(file_chooser)
+        content.add_widget(confirm_button)
+        
+        popup = Popup(title='Vyber složku', content=content, size_hint=(0.9, 0.9))
+        popup.open()
+
     def start_modification(self, instance):
         if not self.selected_folder:
             self.status_label.text = 'Vyber složku ke zpracování!'
