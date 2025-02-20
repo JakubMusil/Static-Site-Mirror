@@ -78,7 +78,7 @@ class StaticSiteMirrorApp(App):
         if not os.path.exists(wget_path):
             wget_path = 'wget2'
         
-        command = f"{wget_path} -k -K -E -r -l 10 -p -N -F --cut-file-get-vars --restrict-file-names=windows -nH {url}"
+        command = f"{wget_path} -k -K -E -r -l 10 -p -Nd -F --cut-file-get-vars --restrict-file-names=windows -nH {url}"
         
         process = subprocess.Popen(command, shell=True, cwd=self.save_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
