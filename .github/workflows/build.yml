@@ -1,0 +1,37 @@
+name: Build EXE with Nuitka
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Nuitka and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install nuitka kivy
+
+      - name: Build EXE with Nuitka
+        run: |
+          nuitka --onefile --windows-icon-from-ico=icon.ico ^
+                 --include-package=kivy ^
+                 --include-data-files=wget2.exe=wget2.exe ^
+                 --output-dir=dist ^
+                 main.py
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v3
+        with:
+          name: built-exe
+          path: dist/main.exe
