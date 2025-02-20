@@ -54,6 +54,45 @@ class StaticSiteMirrorApp(App):
         self.selected_folder = ''
         return self.layout
 
+
+    def start_download(self, instance):
+        if not self.url_input.text or not self.selected_folder:
+            self.status_label.text = 'Zadej URL a vyber složku!'
+            return
+        
+        threading.Thread(target=self.download_site).start()
+    
+    def download_site(self):
+        url = self.url_input.text
+        domain = url.split('//')[-1].split('/')[0]
+        save_path = os.path.join(self.selected_folder, domain)
+        
+        if os.path.exists(save_path):
+            shutil.rmtree(save_path)
+        os.makedirs(save_path, exist_ok=True)
+        
+        self.status_label.text = 'Stahuji stránku...'
+        
+        wget_path = os.path.join(os.path.dirname(__file__), 'bin', 'wget2.exe')
+        if not os.path.exists(wget_path):
+            wget_path = 'wget2'
+        
+        command = f"{wget_path} -k -K -E -r -l 10 -p -N -F --cut-file-get-vars --restrict-file-names=windows -nH {url}"
+        
+        process = subprocess.Popen(command, shell=True, cwd=save_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        
+        for line in process.stdout:
+            if '%' in line:
+                try:
+                    progress = int(re.search(r'(\d+)%', line).group(1))
+                    self.progress.value = progress
+                except:
+                    pass
+        
+        process.wait()
+        self.status_label.text = 'Stažení dokončeno!'
+        self.progress.value = 50
+    
     def open_file_chooser(self, instance):
         content = BoxLayout(orientation='vertical', padding=10, spacing=10)
         file_chooser = FileChooserListView(size_hint=(1, 0.8), dirselect=True)
