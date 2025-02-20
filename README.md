@@ -76,6 +76,7 @@ jobs:
           pip install nuitka kivy
 
       - name: Build EXE with Nuitka
+        shell: cmd
         run: |
           nuitka --onefile --windows-icon-from-ico=icon.ico ^
                  --include-package=kivy ^
