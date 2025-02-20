@@ -52,6 +52,7 @@ class StaticSiteMirrorApp(App):
         self.layout.add_widget(self.status_label)
         
         self.selected_folder = ''
+        self.save_path = ''
         return self.layout
 
 
@@ -65,11 +66,11 @@ class StaticSiteMirrorApp(App):
     def download_site(self):
         url = self.url_input.text
         domain = url.split('//')[-1].split('/')[0]
-        save_path = os.path.join(self.selected_folder, domain)
+        self.save_path = os.path.join(self.selected_folder, domain)
         
-        if os.path.exists(save_path):
-            shutil.rmtree(save_path)
-        os.makedirs(save_path, exist_ok=True)
+        if os.path.exists(self.save_path):
+            shutil.rmtree(self.save_path)
+        os.makedirs(self.save_path, exist_ok=True)
         
         self.status_label.text = 'Stahuji stránku...'
         
@@ -79,7 +80,7 @@ class StaticSiteMirrorApp(App):
         
         command = f"{wget_path} -k -K -E -r -l 10 -p -N -F --cut-file-get-vars --restrict-file-names=windows -nH {url}"
         
-        process = subprocess.Popen(command, shell=True, cwd=save_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        process = subprocess.Popen(command, shell=True, cwd=self.save_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         
         for line in process.stdout:
             if '%' in line:
@@ -119,14 +120,14 @@ class StaticSiteMirrorApp(App):
 
     def delete_orig_files(self):
         self.status_label.text = 'Odstraňuji .html.orig soubory...'
-        for root, _, files in os.walk(self.selected_folder):
+        for root, _, files in os.walk(self.save_path):
             for file in files:
                 if file.endswith('.html.orig'):
                     os.remove(os.path.join(root, file))
         self.status_label.text = 'Odstranění dokončeno!'
     
     def start_modification(self, instance):
-        if not self.selected_folder:
+        if not self.save_path:
             self.status_label.text = 'Vyber složku ke zpracování!'
             return
         
@@ -136,7 +137,7 @@ class StaticSiteMirrorApp(App):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
         
-        for root, _, files in os.walk(self.selected_folder):
+        for root, _, files in os.walk(self.save_path):
             for file in files:
                 file_path = os.path.join(root, file)
                 if file.endswith('.html'):
