@@ -125,6 +125,13 @@ class StaticSiteMirrorApp(App):
                     os.remove(os.path.join(root, file))
         self.status_label.text = 'Odstranění dokončeno!'
     
+    def start_modification(self, instance):
+        if not self.selected_folder:
+            self.status_label.text = 'Vyber složku ke zpracování!'
+            return
+        
+        threading.Thread(target=self.modify_html_files).start()
+    
     def modify_html_files(self):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
