@@ -138,8 +138,9 @@ class StaticSiteMirrorApp(App):
         
         for root, _, files in os.walk(self.selected_folder):
             for file in files:
+                file_path = os.path.join(root, file)
                 if file.endswith('.html'):
-                    file_path = os.path.join(root, file)
+                    
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
                     
