@@ -123,20 +123,23 @@ class StaticSiteMirrorApp(App):
         
         threading.Thread(target=self.modify_html_files).start()
     
-    def modify_html_files(self):
+        def modify_html_files(self):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
         
-        templates_dir = os.path.join(self.selected_folder, 'templates', 'page')
-        public_dir = os.path.join(self.selected_folder, 'public')
+        templates_dir = os.path.join(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]), 'templates', 'page')
+        public_dir = os.path.join(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]), 'public')
         os.makedirs(templates_dir, exist_ok=True)
         os.makedirs(public_dir, exist_ok=True)
         
-        for root, dirs, files in os.walk(self.selected_folder):
-            dirs[:] = [d for d in dirs if d not in ['templates', 'public']]
+        for root, dirs, files in os.walk(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0])):
+            relative_root = os.path.relpath(root, os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]))
+            if relative_root in ['templates', 'public']:
+                continue
             
             for file in files:
                 file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]))
                 
                 if file.endswith('.html'):
                     with open(file_path, 'r', encoding='utf-8') as f:
@@ -147,7 +150,7 @@ class StaticSiteMirrorApp(App):
                     
                     content = re.sub(r'href="(?!http)(?!/)(.*?)"', r'href="/\1"', content)
                     
-                    new_file_path = os.path.join(templates_dir, os.path.relpath(file_path, self.selected_folder))
+                    new_file_path = os.path.join(templates_dir, rel_path)
                     os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
                     shutil.move(file_path, new_file_path)
                     with open(new_file_path, 'w', encoding='utf-8') as f:
@@ -155,11 +158,10 @@ class StaticSiteMirrorApp(App):
                 elif file.endswith('.orig'):
                     os.remove(file_path)
                 else:
-                    rel_path = os.path.relpath(file_path, self.selected_folder)
                     new_static_path = os.path.join(public_dir, rel_path)
                     os.makedirs(os.path.dirname(new_static_path), exist_ok=True)
                     shutil.move(file_path, new_static_path)
-        
+
         self.status_label.text = 'Úprava dokončena!'
         self.progress.value = 100
 
