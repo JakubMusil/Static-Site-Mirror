@@ -116,32 +116,14 @@ class StaticSiteMirrorApp(App):
         popup = Popup(title='Vyber složku', content=content, size_hint=(0.9, 0.9))
         popup.open()
 
-    def start_modification(self, instance):
-        if not self.selected_folder:
-            self.status_label.text = 'Vyber složku ke zpracování!'
-            return
-        
-        threading.Thread(target=self.modify_html_files).start()
-    
-        def modify_html_files(self):
+    def modify_html_files(self):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
         
-        templates_dir = os.path.join(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]), 'templates', 'page')
-        public_dir = os.path.join(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]), 'public')
-        os.makedirs(templates_dir, exist_ok=True)
-        os.makedirs(public_dir, exist_ok=True)
-        
-        for root, dirs, files in os.walk(os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0])):
-            relative_root = os.path.relpath(root, os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]))
-            if relative_root in ['templates', 'public']:
-                continue
-            
+        for root, _, files in os.walk(self.selected_folder):
             for file in files:
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, os.path.join(self.selected_folder, self.url_input.text.split('//')[-1].split('/')[0]))
-                
                 if file.endswith('.html'):
+                    file_path = os.path.join(root, file)
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
                     
@@ -150,18 +132,9 @@ class StaticSiteMirrorApp(App):
                     
                     content = re.sub(r'href="(?!http)(?!/)(.*?)"', r'href="/\1"', content)
                     
-                    new_file_path = os.path.join(templates_dir, rel_path)
-                    os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
-                    shutil.move(file_path, new_file_path)
-                    with open(new_file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
-                elif file.endswith('.orig'):
-                    os.remove(file_path)
-                else:
-                    new_static_path = os.path.join(public_dir, rel_path)
-                    os.makedirs(os.path.dirname(new_static_path), exist_ok=True)
-                    shutil.move(file_path, new_static_path)
-
+        
         self.status_label.text = 'Úprava dokončena!'
         self.progress.value = 100
 
