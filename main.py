@@ -54,6 +54,13 @@ class StaticSiteMirrorApp(App):
         self.selected_folder = ''
         return self.layout
 
+    def start_modification(self, instance):
+        if not self.selected_folder:
+            self.status_label.text = 'Vyber složku ke zpracování!'
+            return
+        
+        threading.Thread(target=self.modify_html_files).start()
+    
     def modify_html_files(self):
         self.status_label.text = 'Upravuji HTML soubory...'
         replacements = [line.split(' > ') for line in self.replacements_input.text.split('\n') if ' > ' in line]
@@ -64,7 +71,6 @@ class StaticSiteMirrorApp(App):
         os.makedirs(public_dir, exist_ok=True)
         
         for root, dirs, files in os.walk(self.selected_folder):
-            # Vyloučení složek templates a public z kopírování
             dirs[:] = [d for d in dirs if d not in ['templates', 'public']]
             
             for file in files:
@@ -91,13 +97,6 @@ class StaticSiteMirrorApp(App):
                     new_static_path = os.path.join(public_dir, rel_path)
                     os.makedirs(os.path.dirname(new_static_path), exist_ok=True)
                     shutil.move(file_path, new_static_path)
-            
-            for dir_name in dirs:
-                dir_path = os.path.join(root, dir_name)
-                rel_path = os.path.relpath(dir_path, self.selected_folder)
-                new_static_path = os.path.join(public_dir, rel_path)
-                if not os.path.exists(new_static_path):
-                    shutil.move(dir_path, new_static_path)
         
         self.status_label.text = 'Úprava dokončena!'
         self.progress.value = 100
