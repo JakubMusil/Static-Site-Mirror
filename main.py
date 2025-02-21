@@ -1,14 +1,3 @@
-Jasně, omlouvám se za nedorozumění – vrátím původní wget2 a přidám lepší logování, abychom měli přehled o tom, co se při stahování děje. Upravím kód tak, aby:
-
-Zachoval původní příkaz wget2 (bez -k a dalších změn, pokud chceš přesně tvou verzi).
-Přidal detailní logování výstupu stdout a stderr od wget2 v reálném čase.
-Nahradil obecný výběr složky dropdownem pro složky v mirror_output.
-Použiji subprocess s živým čtením výstupu, aby se logy zobrazovaly průběžně, a ne až po dokončení.
-
-Upravený kód main.py
-python
-Wrap
-Copy
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.textfield import MDTextField
