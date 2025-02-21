@@ -131,9 +131,10 @@ class MirrorApp(MDApp):
             halign="left",
             valign="top",
             size_hint=(1, 1),
-            text_size=(None, None)
+            text_size=(None, None),
+            padding=[10, 10]  # Přidán padding přímo do MDLabel
         )
-        scroll = ScrollView(padding=[0, 10, 0, 10])
+        scroll = ScrollView()  # Odstraněn padding z inicializace ScrollView
         scroll.add_widget(self.log)
 
         layout.add_widget(mirror_label)
@@ -234,7 +235,7 @@ class MirrorApp(MDApp):
                 stderr_line = self.process.stderr.readline()
                 if stdout_line:
                     self.log_queue.put(f"[wget2] {stdout_line.strip()}")
-                    if "%[" in stdout_line:  # Detekce dokončeného souboru
+                    if "%[" in stdout_line:
                         self.downloaded_files += 1
                         if "Files:" in stdout_line and "Todo:" in stdout_line:
                             files_match = re.search(r"Files: (\d+)", stdout_line)
