@@ -1,9 +1,3 @@
-Omlouvám se za přerušení – dokončím kód a ujistím se, že je kompletní a funkční. Přidám zbývající část metody mirror_site a dalších metod, které jsme už nastavili, aby vše správně fungovalo s většími mezerami v GUI a s parsováním výstupu wget2.
-
-Kompletní upravený kód main.py
-python
-Wrap
-Copy
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.textfield import MDTextField
