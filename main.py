@@ -6,6 +6,7 @@ from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.label import MDLabel
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.card import MDCard
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.uix.scrollview import ScrollView
 from kivy.clock import Clock
@@ -24,7 +25,17 @@ class MirrorApp(MDApp):
         screen = MDScreen()
         layout = MDBoxLayout(orientation="vertical", padding=30, spacing=30)
 
-        # Sekce zrcadlení
+        # Sekce zrcadlení v MDCard
+        mirror_card = MDCard(
+            orientation="vertical",
+            padding=20,
+            spacing=20,
+            md_bg_color=[0.1, 0.1, 0.1, 1],  # Tmavší pozadí pro kontrast
+            elevation=4,  # Jemný stín
+            radius=[10],  # Zaoblené rohy
+            size_hint=(1, None),
+            height="300dp"  # Fixní výška pro sekci
+        )
         mirror_label = MDLabel(
             text="Zrcadlení webu",
             halign="center",
@@ -32,8 +43,6 @@ class MirrorApp(MDApp):
             size_hint=(1, None),
             height="40dp"
         )
-        mirror_separator = MDBoxLayout(size_hint=(1, None), height="20dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
-
         self.url_input = MDTextField(
             hint_text="Zadej URL webu",
             helper_text="Např. https://example.com",
@@ -42,7 +51,6 @@ class MirrorApp(MDApp):
             size_hint=(1, None),
             height="60dp"
         )
-
         self.depth_input = MDTextField(
             hint_text="Maximální hloubka (1-1000)",
             helper_text="Počet úrovní odkazů",
@@ -52,7 +60,6 @@ class MirrorApp(MDApp):
             size_hint=(1, None),
             height="60dp"
         )
-
         mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=20, padding=[0, 20, 0, 0])
         self.start_button = MDRaisedButton(
             text="Spustit zrcadlení",
@@ -72,7 +79,22 @@ class MirrorApp(MDApp):
         mirror_button_layout.add_widget(self.start_button)
         mirror_button_layout.add_widget(self.stop_button)
 
-        # Sekce nahrazování
+        mirror_card.add_widget(mirror_label)
+        mirror_card.add_widget(self.url_input)
+        mirror_card.add_widget(self.depth_input)
+        mirror_card.add_widget(mirror_button_layout)
+
+        # Sekce nahrazování v MDCard
+        replace_card = MDCard(
+            orientation="vertical",
+            padding=20,
+            spacing=20,
+            md_bg_color=[0.1, 0.1, 0.1, 1],
+            elevation=4,
+            radius=[10],
+            size_hint=(1, None),
+            height="300dp"
+        )
         replace_label = MDLabel(
             text="Nahrazování textu",
             halign="center",
@@ -80,8 +102,6 @@ class MirrorApp(MDApp):
             size_hint=(1, None),
             height="40dp"
         )
-        replace_separator = MDBoxLayout(size_hint=(1, None), height="20dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
-
         self.replacements_input = MDTextField(
             hint_text="Cesta k souboru replacements.txt",
             helper_text="Např. ./replacements.txt s obsahem tohle_najdi|||nahrad_timto",
@@ -91,7 +111,6 @@ class MirrorApp(MDApp):
             size_hint=(1, None),
             height="60dp"
         )
-
         self.folder_input = MDTextField(
             hint_text="Vybraná složka z mirror_output",
             helper_text="Klikni na tlačítko pro výběr",
@@ -110,7 +129,6 @@ class MirrorApp(MDApp):
         folder_layout = MDBoxLayout(orientation="horizontal", spacing=20)
         folder_layout.add_widget(self.folder_input)
         folder_layout.add_widget(self.folder_button)
-
         self.replace_button = MDRaisedButton(
             text="Nahradit text",
             pos_hint={"center_x": 0.5},
@@ -119,34 +137,30 @@ class MirrorApp(MDApp):
             on_release=self.replace_text
         )
 
+        replace_card.add_widget(replace_label)
+        replace_card.add_widget(self.replacements_input)
+        replace_card.add_widget(folder_layout)
+        replace_card.add_widget(self.replace_button)
+
         # Společné prvky
         self.progress = MDProgressBar(
             value=0,
             size_hint=(1, None),
             height="40dp"
         )
-
         self.log = MDLabel(
             text="Připraveno",
             halign="left",
             valign="top",
             size_hint=(1, 1),
             text_size=(None, None),
-            padding=[10, 10]  # Přidán padding přímo do MDLabel
+            padding=[10, 10]
         )
-        scroll = ScrollView()  # Odstraněn padding z inicializace ScrollView
+        scroll = ScrollView()
         scroll.add_widget(self.log)
 
-        layout.add_widget(mirror_label)
-        layout.add_widget(mirror_separator)
-        layout.add_widget(self.url_input)
-        layout.add_widget(self.depth_input)
-        layout.add_widget(mirror_button_layout)
-        layout.add_widget(replace_label)
-        layout.add_widget(replace_separator)
-        layout.add_widget(self.replacements_input)
-        layout.add_widget(folder_layout)
-        layout.add_widget(self.replace_button)
+        layout.add_widget(mirror_card)
+        layout.add_widget(replace_card)
         layout.add_widget(self.progress)
         layout.add_widget(scroll)
         screen.add_widget(layout)
@@ -162,7 +176,7 @@ class MirrorApp(MDApp):
 
     def update_log(self, message):
         self.log.text += f"\n{message}"
-        self.root.children[0].children[2].scroll_y = 0
+        self.root.children[0].children[0].scroll_y = 0  # Upraven index kvůli nové struktuře
 
     def open_folder_menu(self, instance):
         if not os.path.exists(self.output_dir):
