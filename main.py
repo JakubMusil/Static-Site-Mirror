@@ -89,7 +89,7 @@ class MirrorApp(MDApp):
             icon_right="file-document",
             text="replacements.txt",
             size_hint=(1, None),
-            height="80dp"  # Zvýšena výška
+            height="50dp"  # Zvýšena výška
         )
 
         self.folder_input = MDTextField(
@@ -97,14 +97,14 @@ class MirrorApp(MDApp):
             helper_text="Klikni na tlačítko pro výběr",
             mode="rectangle",
             text="mirror_output",
-            size_hint=(0.8, None),
-            height="80dp",  # Zvýšena výška
+            size_hint=(1, None),
+            height="50dp",  # Zvýšena výška
             disabled=True
         )
         self.folder_button = MDRaisedButton(
             text="Vybrat",
-            size_hint=(0.2, None),
-            height="80dp",  # Zvýšena výška
+            size_hint=(1, None),
+            height="50dp",  # Zvýšena výška
             on_release=self.open_folder_menu
         )
         folder_layout = MDBoxLayout(orientation="horizontal", spacing=15)  # Zvýšeno spacing
