@@ -1,3 +1,9 @@
+Omlouvám se za přerušení – dokončím kód a ujistím se, že je kompletní a funkční. Přidám zbývající část metody mirror_site a dalších metod, které jsme už nastavili, aby vše správně fungovalo s většími mezerami v GUI a s parsováním výstupu wget2.
+
+Kompletní upravený kód main.py
+python
+Wrap
+Copy
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.textfield import MDTextField
@@ -22,7 +28,7 @@ class MirrorApp(MDApp):
         self.theme_cls.accent_palette = "Gray"
 
         screen = MDScreen()
-        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=20)  # Zvýšeno spacing z 10 na 20
+        layout = MDBoxLayout(orientation="vertical", padding=30, spacing=30)
 
         # Sekce zrcadlení
         mirror_label = MDLabel(
@@ -30,9 +36,9 @@ class MirrorApp(MDApp):
             halign="center",
             theme_text_color="Primary",
             size_hint=(1, None),
-            height="40dp"  # Zvýšena výška nadpisu
+            height="40dp"
         )
-        mirror_separator = MDBoxLayout(size_hint=(1, None), height="15dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])  # Zvýšena výška separátoru
+        mirror_separator = MDBoxLayout(size_hint=(1, None), height="20dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
 
         self.url_input = MDTextField(
             hint_text="Zadej URL webu",
@@ -40,7 +46,7 @@ class MirrorApp(MDApp):
             mode="rectangle",
             icon_right="web",
             size_hint=(1, None),
-            height="60dp"  # Zvýšena výška pro větší prostor na hint
+            height="60dp"
         )
 
         self.depth_input = MDTextField(
@@ -50,14 +56,14 @@ class MirrorApp(MDApp):
             input_filter="int",
             text="1000",
             size_hint=(1, None),
-            height="60dp"  # Zvýšena výška
+            height="60dp"
         )
 
-        mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=15, padding=[0, 15, 0, 0])  # Zvýšeno spacing a padding
+        mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=20, padding=[0, 20, 0, 0])
         self.start_button = MDRaisedButton(
             text="Spustit zrcadlení",
             pos_hint={"center_x": 0.5},
-            size_hint=(0.5, None),  # Širší tlačítka
+            size_hint=(0.5, None),
             height="50dp",
             on_release=self.start_mirroring
         )
@@ -78,9 +84,9 @@ class MirrorApp(MDApp):
             halign="center",
             theme_text_color="Primary",
             size_hint=(1, None),
-            height="40dp"  # Zvýšena výška nadpisu
+            height="40dp"
         )
-        replace_separator = MDBoxLayout(size_hint=(1, None), height="15dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])  # Zvýšena výška separátoru
+        replace_separator = MDBoxLayout(size_hint=(1, None), height="20dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
 
         self.replacements_input = MDTextField(
             hint_text="Cesta k souboru replacements.txt",
@@ -89,7 +95,7 @@ class MirrorApp(MDApp):
             icon_right="file-document",
             text="replacements.txt",
             size_hint=(1, None),
-            height="50dp"  # Zvýšena výška
+            height="60dp"
         )
 
         self.folder_input = MDTextField(
@@ -97,24 +103,24 @@ class MirrorApp(MDApp):
             helper_text="Klikni na tlačítko pro výběr",
             mode="rectangle",
             text="mirror_output",
-            size_hint=(1, None),
-            height="50dp",  # Zvýšena výška
+            size_hint=(0.8, None),
+            height="60dp",
             disabled=True
         )
         self.folder_button = MDRaisedButton(
             text="Vybrat",
-            size_hint=(1, None),
-            height="50dp",  # Zvýšena výška
+            size_hint=(0.2, None),
+            height="60dp",
             on_release=self.open_folder_menu
         )
-        folder_layout = MDBoxLayout(orientation="horizontal", spacing=15)  # Zvýšeno spacing
+        folder_layout = MDBoxLayout(orientation="horizontal", spacing=20)
         folder_layout.add_widget(self.folder_input)
         folder_layout.add_widget(self.folder_button)
 
         self.replace_button = MDRaisedButton(
             text="Nahradit text",
             pos_hint={"center_x": 0.5},
-            size_hint=(1, None),  # Širší tlačítko
+            size_hint=(1, None),
             height="50dp",
             on_release=self.replace_text
         )
@@ -123,7 +129,7 @@ class MirrorApp(MDApp):
         self.progress = MDProgressBar(
             value=0,
             size_hint=(1, None),
-            height="30dp"  # Zvýšena výška pro lepší viditelnost
+            height="40dp"
         )
 
         self.log = MDLabel(
@@ -133,7 +139,7 @@ class MirrorApp(MDApp):
             size_hint=(1, 1),
             text_size=(None, None)
         )
-        scroll = ScrollView()
+        scroll = ScrollView(padding=[0, 10, 0, 10])
         scroll.add_widget(self.log)
 
         layout.add_widget(mirror_label)
@@ -161,7 +167,7 @@ class MirrorApp(MDApp):
 
     def update_log(self, message):
         self.log.text += f"\n{message}"
-        self.root.children[0].children[2].scroll_y = 0  # Upraven index kvůli změně struktury
+        self.root.children[0].children[2].scroll_y = 0
 
     def open_folder_menu(self, instance):
         if not os.path.exists(self.output_dir):
@@ -222,6 +228,8 @@ class MirrorApp(MDApp):
                 "--convert-links",
                 "--adjust-extension",
                 "--page-requisites",
+                "--user-agent=Mozilla/5.0",
+                "--wait=1",
                 f"--directory-prefix={self.output_dir}",
                 url
             ]
@@ -232,7 +240,7 @@ class MirrorApp(MDApp):
                 stderr_line = self.process.stderr.readline()
                 if stdout_line:
                     self.log_queue.put(f"[wget2] {stdout_line.strip()}")
-                    if "%[" in stdout_line:
+                    if "%[" in stdout_line:  # Detekce dokončeného souboru
                         self.downloaded_files += 1
                         if "Files:" in stdout_line and "Todo:" in stdout_line:
                             files_match = re.search(r"Files: (\d+)", stdout_line)
