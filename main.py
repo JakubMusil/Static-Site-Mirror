@@ -193,7 +193,7 @@ class MirrorApp(MDApp):
                 "-F",
                 "--cut-file-get-vars",
                 "--restrict-file-names=windows",
-                "-nh",
+                "-nH",
                 f"--directory-prefix={self.output_dir}",
                 url
             ]
