@@ -22,7 +22,7 @@ class MirrorApp(MDApp):
         self.theme_cls.accent_palette = "Gray"
 
         screen = MDScreen()
-        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=10)
+        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=20)  # Zvýšeno spacing z 10 na 20
 
         # Sekce zrcadlení
         mirror_label = MDLabel(
@@ -30,9 +30,9 @@ class MirrorApp(MDApp):
             halign="center",
             theme_text_color="Primary",
             size_hint=(1, None),
-            height="30dp"
+            height="40dp"  # Zvýšena výška nadpisu
         )
-        mirror_separator = MDBoxLayout(size_hint=(1, None), height="10dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
+        mirror_separator = MDBoxLayout(size_hint=(1, None), height="15dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])  # Zvýšena výška separátoru
 
         self.url_input = MDTextField(
             hint_text="Zadej URL webu",
@@ -40,7 +40,7 @@ class MirrorApp(MDApp):
             mode="rectangle",
             icon_right="web",
             size_hint=(1, None),
-            height="50dp"
+            height="60dp"  # Zvýšena výška pro větší prostor na hint
         )
 
         self.depth_input = MDTextField(
@@ -50,18 +50,22 @@ class MirrorApp(MDApp):
             input_filter="int",
             text="1000",
             size_hint=(1, None),
-            height="50dp"
+            height="60dp"  # Zvýšena výška
         )
 
-        mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=10, padding=[0, 10, 0, 0])
+        mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=15, padding=[0, 15, 0, 0])  # Zvýšeno spacing a padding
         self.start_button = MDRaisedButton(
             text="Spustit zrcadlení",
             pos_hint={"center_x": 0.5},
+            size_hint=(0.5, None),  # Širší tlačítka
+            height="50dp",
             on_release=self.start_mirroring
         )
         self.stop_button = MDRaisedButton(
             text="Zastavit",
             pos_hint={"center_x": 0.5},
+            size_hint=(0.5, None),
+            height="50dp",
             disabled=True,
             on_release=self.stop_mirroring
         )
@@ -74,9 +78,9 @@ class MirrorApp(MDApp):
             halign="center",
             theme_text_color="Primary",
             size_hint=(1, None),
-            height="30dp"
+            height="40dp"  # Zvýšena výška nadpisu
         )
-        replace_separator = MDBoxLayout(size_hint=(1, None), height="10dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
+        replace_separator = MDBoxLayout(size_hint=(1, None), height="15dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])  # Zvýšena výška separátoru
 
         self.replacements_input = MDTextField(
             hint_text="Cesta k souboru replacements.txt",
@@ -85,7 +89,7 @@ class MirrorApp(MDApp):
             icon_right="file-document",
             text="replacements.txt",
             size_hint=(1, None),
-            height="50dp"
+            height="60dp"  # Zvýšena výška
         )
 
         self.folder_input = MDTextField(
@@ -94,22 +98,24 @@ class MirrorApp(MDApp):
             mode="rectangle",
             text="mirror_output",
             size_hint=(0.8, None),
-            height="50dp",
+            height="60dp",  # Zvýšena výška
             disabled=True
         )
         self.folder_button = MDRaisedButton(
             text="Vybrat",
             size_hint=(0.2, None),
-            height="50dp",
+            height="60dp",  # Zvýšena výška
             on_release=self.open_folder_menu
         )
-        folder_layout = MDBoxLayout(orientation="horizontal", spacing=10)
+        folder_layout = MDBoxLayout(orientation="horizontal", spacing=15)  # Zvýšeno spacing
         folder_layout.add_widget(self.folder_input)
         folder_layout.add_widget(self.folder_button)
 
         self.replace_button = MDRaisedButton(
             text="Nahradit text",
             pos_hint={"center_x": 0.5},
+            size_hint=(1, None),  # Širší tlačítko
+            height="50dp",
             on_release=self.replace_text
         )
 
@@ -117,7 +123,7 @@ class MirrorApp(MDApp):
         self.progress = MDProgressBar(
             value=0,
             size_hint=(1, None),
-            height="20dp"
+            height="30dp"  # Zvýšena výška pro lepší viditelnost
         )
 
         self.log = MDLabel(
@@ -149,13 +155,13 @@ class MirrorApp(MDApp):
         self.selected_folder = self.output_dir
         self.log_queue = queue.Queue()
         self.downloaded_files = 0
-        self.total_files = 0  # Odhad celkového počtu souborů
+        self.total_files = 0
 
         return screen
 
     def update_log(self, message):
         self.log.text += f"\n{message}"
-        self.root.children[0].children[1].scroll_y = 0
+        self.root.children[0].children[2].scroll_y = 0  # Upraven index kvůli změně struktury
 
     def open_folder_menu(self, instance):
         if not os.path.exists(self.output_dir):
@@ -226,7 +232,7 @@ class MirrorApp(MDApp):
                 stderr_line = self.process.stderr.readline()
                 if stdout_line:
                     self.log_queue.put(f"[wget2] {stdout_line.strip()}")
-                    if "%[" in stdout_line:  # Detekce progress baru
+                    if "%[" in stdout_line:
                         self.downloaded_files += 1
                         if "Files:" in stdout_line and "Todo:" in stdout_line:
                             files_match = re.search(r"Files: (\d+)", stdout_line)
@@ -274,7 +280,7 @@ class MirrorApp(MDApp):
 
     def update_progress(self, dt):
         if self.running and self.total_files > 0:
-            progress = min((self.downloaded_files / self.total_files) * 100, 90)  # Max 90%, dokud neskončí
+            progress = min((self.downloaded_files / self.total_files) * 100, 90)
             self.progress.value = progress
         elif not self.running:
             self.progress.value = 100
