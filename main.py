@@ -22,7 +22,17 @@ class MirrorApp(MDApp):
         self.theme_cls.accent_palette = "Gray"
 
         screen = MDScreen()
-        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=20)
+        layout = MDBoxLayout(orientation="vertical", padding=20, spacing=10)
+
+        # Sekce zrcadlení
+        mirror_label = MDLabel(
+            text="Zrcadlení webu",
+            halign="center",
+            theme_text_color="Primary",
+            size_hint=(1, None),
+            height="30dp"
+        )
+        mirror_separator = MDBoxLayout(size_hint=(1, None), height="10dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
 
         self.url_input = MDTextField(
             hint_text="Zadej URL webu",
@@ -34,7 +44,7 @@ class MirrorApp(MDApp):
         )
 
         self.depth_input = MDTextField(
-            hint_text="Maximální hloubka (1x1000)",
+            hint_text="Maximální hloubka (1-1000)",
             helper_text="Počet úrovní odkazů",
             mode="rectangle",
             input_filter="int",
@@ -43,8 +53,33 @@ class MirrorApp(MDApp):
             height="50dp"
         )
 
+        mirror_button_layout = MDBoxLayout(orientation="horizontal", spacing=10, padding=[0, 10, 0, 0])
+        self.start_button = MDRaisedButton(
+            text="Spustit zrcadlení",
+            pos_hint={"center_x": 0.5},
+            on_release=self.start_mirroring
+        )
+        self.stop_button = MDRaisedButton(
+            text="Zastavit",
+            pos_hint={"center_x": 0.5},
+            disabled=True,
+            on_release=self.stop_mirroring
+        )
+        mirror_button_layout.add_widget(self.start_button)
+        mirror_button_layout.add_widget(self.stop_button)
+
+        # Sekce nahrazování
+        replace_label = MDLabel(
+            text="Nahrazování textu",
+            halign="center",
+            theme_text_color="Primary",
+            size_hint=(1, None),
+            height="30dp"
+        )
+        replace_separator = MDBoxLayout(size_hint=(1, None), height="10dp", md_bg_color=[0.5, 0.5, 0.5, 0.2])
+
         self.replacements_input = MDTextField(
-            hint_text="Cesta k souboru replacements.txt k nahrazení textů",
+            hint_text="Cesta k souboru replacements.txt",
             helper_text="Např. ./replacements.txt s obsahem tohle_najdi|||nahrad_timto",
             mode="rectangle",
             icon_right="file-document",
@@ -53,15 +88,14 @@ class MirrorApp(MDApp):
             height="50dp"
         )
 
-        # Pole pro výběr složky z mirror_output s tlačítkem
         self.folder_input = MDTextField(
-            hint_text="Vybraná složka z mirror_output k nahrazení textů",
+            hint_text="Vybraná složka z mirror_output",
             helper_text="Klikni na tlačítko pro výběr",
             mode="rectangle",
             text="mirror_output",
             size_hint=(0.8, None),
             height="50dp",
-            disabled=True  # Jen pro zobrazení
+            disabled=True
         )
         self.folder_button = MDRaisedButton(
             text="Vybrat",
@@ -73,6 +107,13 @@ class MirrorApp(MDApp):
         folder_layout.add_widget(self.folder_input)
         folder_layout.add_widget(self.folder_button)
 
+        self.replace_button = MDRaisedButton(
+            text="Nahradit text",
+            pos_hint={"center_x": 0.5},
+            on_release=self.replace_text
+        )
+
+        # Společné prvky
         self.progress = MDProgressBar(
             value=0,
             size_hint=(1, None),
@@ -89,40 +130,26 @@ class MirrorApp(MDApp):
         scroll = ScrollView()
         scroll.add_widget(self.log)
 
-        button_layout = MDBoxLayout(orientation="horizontal", spacing=10, padding=[0, 10, 0, 0])
-        self.start_button = MDRaisedButton(
-            text="Spustit zrcadlení",
-            pos_hint={"center_x": 0.5},
-            on_release=self.start_mirroring
-        )
-        self.stop_button = MDRaisedButton(
-            text="Zastavit",
-            pos_hint={"center_x": 0.5},
-            disabled=True,
-            on_release=self.stop_mirroring
-        )
-        self.replace_button = MDRaisedButton(
-            text="Nahradit text",
-            pos_hint={"center_x": 0.5},
-            on_release=self.replace_text
-        )
-        button_layout.add_widget(self.start_button)
-        button_layout.add_widget(self.stop_button)
-        button_layout.add_widget(self.replace_button)
-
+        layout.add_widget(mirror_label)
+        layout.add_widget(mirror_separator)
         layout.add_widget(self.url_input)
         layout.add_widget(self.depth_input)
+        layout.add_widget(mirror_button_layout)
+        layout.add_widget(replace_label)
+        layout.add_widget(replace_separator)
         layout.add_widget(self.replacements_input)
         layout.add_widget(folder_layout)
+        layout.add_widget(self.replace_button)
         layout.add_widget(self.progress)
         layout.add_widget(scroll)
-        layout.add_widget(button_layout)
         screen.add_widget(layout)
 
         self.running = False
         self.output_dir = "mirror_output"
-        self.selected_folder = self.output_dir  # Výchozí složka
+        self.selected_folder = self.output_dir
         self.log_queue = queue.Queue()
+        self.downloaded_files = 0
+        self.total_files = 0  # Odhad celkového počtu souborů
 
         return screen
 
@@ -158,6 +185,8 @@ class MirrorApp(MDApp):
         self.stop_button.disabled = False
         self.replace_button.disabled = True
         self.progress.value = 0
+        self.downloaded_files = 0
+        self.total_files = 0
         self.update_log(f"Spouštím zrcadlení: {url}")
 
         if not os.path.exists(self.output_dir):
@@ -181,6 +210,7 @@ class MirrorApp(MDApp):
         try:
             cmd = [
                 "wget2",
+                "--progress=bar",
                 "--mirror",
                 f"--level={max_depth}",
                 "--convert-links",
@@ -196,6 +226,13 @@ class MirrorApp(MDApp):
                 stderr_line = self.process.stderr.readline()
                 if stdout_line:
                     self.log_queue.put(f"[wget2] {stdout_line.strip()}")
+                    if "%[" in stdout_line:  # Detekce progress baru
+                        self.downloaded_files += 1
+                        if "Files:" in stdout_line and "Todo:" in stdout_line:
+                            files_match = re.search(r"Files: (\d+)", stdout_line)
+                            todo_match = re.search(r"Todo: (\d+)", stdout_line)
+                            if files_match and todo_match:
+                                self.total_files = int(files_match.group(1)) + int(todo_match.group(1))
                 if stderr_line:
                     self.log_queue.put(f"[wget2 ERROR] {stderr_line.strip()}")
 
@@ -234,6 +271,14 @@ class MirrorApp(MDApp):
         while not self.log_queue.empty():
             message = self.log_queue.get()
             self.update_log(message)
+
+    def update_progress(self, dt):
+        if self.running and self.total_files > 0:
+            progress = min((self.downloaded_files / self.total_files) * 100, 90)  # Max 90%, dokud neskončí
+            self.progress.value = progress
+        elif not self.running:
+            self.progress.value = 100
+            Clock.unschedule(self.update_progress)
 
     def replace_text(self, instance):
         replacements_file = self.replacements_input.text.strip()
@@ -284,14 +329,6 @@ class MirrorApp(MDApp):
                         self.update_log(f"Chyba při zpracování {file_path}: {str(e)}")
 
         self.update_log(f"Celkem nahrazeno: {total_replaced} výskytů.")
-
-    def update_progress(self, dt):
-        if self.running:
-            if self.progress.value < 90:
-                self.progress.value += 5
-        else:
-            self.progress.value = 100
-            Clock.unschedule(self.update_progress)
 
     def show_error(self, message):
         dialog = MDDialog(
