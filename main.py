@@ -34,18 +34,18 @@ class MirrorApp(MDApp):
         )
 
         self.depth_input = MDTextField(
-            hint_text="Maximální hloubka (1-5)",
+            hint_text="Maximální hloubka (1x1000)",
             helper_text="Počet úrovní odkazů",
             mode="rectangle",
             input_filter="int",
-            text="1",
+            text="1000",
             size_hint=(1, None),
             height="50dp"
         )
 
         self.replacements_input = MDTextField(
-            hint_text="Cesta k souboru replacements.txt",
-            helper_text="Např. ./replacements.txt",
+            hint_text="Cesta k souboru replacements.txt k nahrazení textů",
+            helper_text="Např. ./replacements.txt s obsahem tohle_najdi|||nahrad_timto",
             mode="rectangle",
             icon_right="file-document",
             text="replacements.txt",
@@ -55,7 +55,7 @@ class MirrorApp(MDApp):
 
         # Pole pro výběr složky z mirror_output s tlačítkem
         self.folder_input = MDTextField(
-            hint_text="Vybraná složka z mirror_output",
+            hint_text="Vybraná složka z mirror_output k nahrazení textů",
             helper_text="Klikni na tlačítko pro výběr",
             mode="rectangle",
             text="mirror_output",
