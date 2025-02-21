@@ -184,11 +184,16 @@ class MirrorApp(MDApp):
         try:
             cmd = [
                 "wget2",
-                "--mirror",
+                "-k",
                 f"--level={max_depth}",
-                "--convert-links",
-                "--adjust-extension",
-                "--page-requisites",
+                "-E",
+                "-r",
+                "-p",
+                "-N",
+                "-F",
+                "--cut-file-get-vars",
+                "--restrict-file-names=windows",
+                "-nh",
                 f"--directory-prefix={self.output_dir}",
                 url
             ]
