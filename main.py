@@ -9,7 +9,6 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.uix.scrollview import ScrollView
-from kivy.core.window import Window  # Přidán pro maximalizaci okna
 from kivy.clock import Clock
 import subprocess
 import os
@@ -23,9 +22,6 @@ class MirrorApp(MDApp):
         self.theme_cls.primary_palette = "DeepOrange"
         self.theme_cls.accent_palette = "Gray"
 
-        # Maximalizace okna při spuštění
-        Window.maximize()
-
         screen = MDScreen()
         layout = MDBoxLayout(orientation="vertical", padding=30, spacing=30)
 
@@ -34,11 +30,11 @@ class MirrorApp(MDApp):
             orientation="vertical",
             padding=20,
             spacing=20,
-            md_bg_color=[0.1, 0.1, 0.1, 1],
-            elevation=4,
-            radius=[10],
+            md_bg_color=[0.1, 0.1, 0.1, 1],  # Tmavší pozadí pro kontrast
+            elevation=4,  # Jemný stín
+            radius=[10],  # Zaoblené rohy
             size_hint=(1, None),
-            height="300dp"
+            height="300dp"  # Fixní výška pro sekci
         )
         mirror_label = MDLabel(
             text="Zrcadlení webu",
@@ -178,10 +174,13 @@ class MirrorApp(MDApp):
 
         return screen
 
-    def update_log(self, message):
-        self.log.text += f"\n{message}"
+    def update_log(self, message, reset=True):
+        if reset:
+            self.log.text = message  # Resetovat log
+        else:
+            self.log.text += f"\n{message}"  # Přidat nový text bez resetu
         self.root.children[0].children[0].scroll_y = 0
-
+        
     def open_folder_menu(self, instance):
         if not os.path.exists(self.output_dir):
             self.show_error("Nejprve proveď zrcadlení, aby byly k dispozici složky!")
@@ -230,7 +229,7 @@ class MirrorApp(MDApp):
         self.replace_button.disabled = False
         self.update_log("Zrcadlení zastaveno uživatelem.")
         Clock.unschedule(self.process_log_queue)
-
+    
     def mirror_site(self, url, max_depth):
         try:
             cmd = [
@@ -247,30 +246,30 @@ class MirrorApp(MDApp):
                 url
             ]
             self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, universal_newlines=True)
-            
-            while self.running and self.process.poll() is None:
-                stdout_line = self.process.stdout.readline()
-                stderr_line = self.process.stderr.readline()
-                if stdout_line:
-                    self.log_queue.put(f"[wget2] {stdout_line.strip()}")
-                    if "%[" in stdout_line:
-                        self.downloaded_files += 1
-                        if "Files:" in stdout_line and "Todo:" in stdout_line:
-                            files_match = re.search(r"Files: (\d+)", stdout_line)
-                            todo_match = re.search(r"Todo: (\d+)", stdout_line)
-                            if files_match and todo_match:
-                                self.total_files = int(files_match.group(1)) + int(todo_match.group(1))
-                if stderr_line:
-                    self.log_queue.put(f"[wget2 ERROR] {stderr_line.strip()}")
-
-            stdout, stderr = self.process.communicate()
+    
+            # Práce s výstupem v reálném čase
+            while self.running:
+                stdout_line = self.process.stdout.readline()  # Čteme výstup
+                stderr_line = self.process.stderr.readline()  # Čteme chyby
+    
+                if stdout_line:  # Pokud existuje výstup
+                    self.log_queue.put(f"[wget2] {stdout_line.strip()}")  # Přidáme do logu
+    
+                if stderr_line:  # Pokud existuje chyba
+                    self.log_queue.put(f"[wget2 ERROR] {stderr_line.strip()}")  # Přidáme do logu
+    
+                if self.process.poll() is not None:  # Pokud je proces ukončen
+                    break
+    
+            stdout, stderr = self.process.communicate()  # Počkejte na dokončení procesu a získejte poslední výstupy
             if stdout:
                 for line in stdout.splitlines():
                     self.log_queue.put(f"[wget2] {line.strip()}")
             if stderr:
                 for line in stderr.splitlines():
                     self.log_queue.put(f"[wget2 ERROR] {line.strip()}")
-
+    
+            # Po dokončení výstupu
             if self.running:
                 if self.process.returncode == 0:
                     self.update_log("Zrcadlení dokončeno!")
@@ -280,7 +279,7 @@ class MirrorApp(MDApp):
             self.start_button.disabled = False
             self.stop_button.disabled = True
             self.replace_button.disabled = False
-
+    
         except FileNotFoundError:
             self.update_log("Chyba: wget2 není nainstalován na tvém systému!")
             self.running = False
