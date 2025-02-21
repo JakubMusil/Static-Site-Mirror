@@ -6,7 +6,6 @@ from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.label import MDLabel
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.dropdownitem import MDDropDownItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.uix.scrollview import ScrollView
 from kivy.clock import Clock
@@ -54,13 +53,25 @@ class MirrorApp(MDApp):
             height="50dp"
         )
 
-        # Dropdown pro výběr složky z mirror_output
-        self.folder_dropdown = MDDropDownItem(
-            text="Vyber složku z mirror_output",
-            size_hint=(1, None),
-            height="50dp"
+        # Pole pro výběr složky z mirror_output s tlačítkem
+        self.folder_input = MDTextField(
+            hint_text="Vybraná složka z mirror_output",
+            helper_text="Klikni na tlačítko pro výběr",
+            mode="rectangle",
+            text="mirror_output",
+            size_hint=(0.8, None),
+            height="50dp",
+            disabled=True  # Jen pro zobrazení
         )
-        self.folder_dropdown.bind(on_release=self.open_folder_menu)
+        self.folder_button = MDRaisedButton(
+            text="Vybrat",
+            size_hint=(0.2, None),
+            height="50dp",
+            on_release=self.open_folder_menu
+        )
+        folder_layout = MDBoxLayout(orientation="horizontal", spacing=10)
+        folder_layout.add_widget(self.folder_input)
+        folder_layout.add_widget(self.folder_button)
 
         self.progress = MDProgressBar(
             value=0,
@@ -102,7 +113,7 @@ class MirrorApp(MDApp):
         layout.add_widget(self.url_input)
         layout.add_widget(self.depth_input)
         layout.add_widget(self.replacements_input)
-        layout.add_widget(self.folder_dropdown)
+        layout.add_widget(folder_layout)
         layout.add_widget(self.progress)
         layout.add_widget(scroll)
         layout.add_widget(button_layout)
@@ -111,17 +122,15 @@ class MirrorApp(MDApp):
         self.running = False
         self.output_dir = "mirror_output"
         self.selected_folder = self.output_dir  # Výchozí složka
-        self.log_queue = queue.Queue()  # Fronta pro logování
+        self.log_queue = queue.Queue()
 
         return screen
 
     def update_log(self, message):
-        """Aktualizuje logovací okno."""
         self.log.text += f"\n{message}"
         self.root.children[0].children[1].scroll_y = 0
 
     def open_folder_menu(self, instance):
-        """Otevře dropdown menu se složkami z mirror_output."""
         if not os.path.exists(self.output_dir):
             self.show_error("Nejprve proveď zrcadlení, aby byly k dispozici složky!")
             return
@@ -132,9 +141,8 @@ class MirrorApp(MDApp):
         self.folder_menu.open()
 
     def set_folder(self, folder_path):
-        """Nastaví vybranou složku."""
         self.selected_folder = folder_path
-        self.folder_dropdown.text = os.path.basename(folder_path) or "root"
+        self.folder_input.text = os.path.basename(folder_path) or "root"
         self.folder_menu.dismiss()
 
     def start_mirroring(self, instance):
@@ -157,7 +165,7 @@ class MirrorApp(MDApp):
 
         threading.Thread(target=self.mirror_site, args=(url, depth)).start()
         Clock.schedule_interval(self.update_progress, 0.5)
-        Clock.schedule_interval(self.process_log_queue, 0.1)  # Průběžné logování
+        Clock.schedule_interval(self.process_log_queue, 0.1)
 
     def stop_mirroring(self, instance):
         self.running = False
@@ -170,7 +178,6 @@ class MirrorApp(MDApp):
         Clock.unschedule(self.process_log_queue)
 
     def mirror_site(self, url, max_depth):
-        """Spustí wget2 pro zrcadlení webu s detailním logováním."""
         try:
             cmd = [
                 "wget2",
@@ -184,7 +191,6 @@ class MirrorApp(MDApp):
             ]
             self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, universal_newlines=True)
             
-            # Čtení výstupu v reálném čase
             while self.running and self.process.poll() is None:
                 stdout_line = self.process.stdout.readline()
                 stderr_line = self.process.stderr.readline()
@@ -193,7 +199,6 @@ class MirrorApp(MDApp):
                 if stderr_line:
                     self.log_queue.put(f"[wget2 ERROR] {stderr_line.strip()}")
 
-            # Dokončení procesu
             stdout, stderr = self.process.communicate()
             if stdout:
                 for line in stdout.splitlines():
@@ -226,7 +231,6 @@ class MirrorApp(MDApp):
             self.replace_button.disabled = False
 
     def process_log_queue(self, dt):
-        """Zpracovává frontu logů a aktualizuje GUI."""
         while not self.log_queue.empty():
             message = self.log_queue.get()
             self.update_log(message)
