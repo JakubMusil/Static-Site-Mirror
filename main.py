@@ -9,6 +9,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.uix.scrollview import ScrollView
+from kivy.core.window import Window  # Přidán pro maximalizaci okna
 from kivy.clock import Clock
 import subprocess
 import os
@@ -22,6 +23,9 @@ class MirrorApp(MDApp):
         self.theme_cls.primary_palette = "DeepOrange"
         self.theme_cls.accent_palette = "Gray"
 
+        # Maximalizace okna při spuštění
+        Window.maximize()
+
         screen = MDScreen()
         layout = MDBoxLayout(orientation="vertical", padding=30, spacing=30)
 
@@ -30,11 +34,11 @@ class MirrorApp(MDApp):
             orientation="vertical",
             padding=20,
             spacing=20,
-            md_bg_color=[0.1, 0.1, 0.1, 1],  # Tmavší pozadí pro kontrast
-            elevation=4,  # Jemný stín
-            radius=[10],  # Zaoblené rohy
+            md_bg_color=[0.1, 0.1, 0.1, 1],
+            elevation=4,
+            radius=[10],
             size_hint=(1, None),
-            height="300dp"  # Fixní výška pro sekci
+            height="300dp"
         )
         mirror_label = MDLabel(
             text="Zrcadlení webu",
@@ -176,7 +180,7 @@ class MirrorApp(MDApp):
 
     def update_log(self, message):
         self.log.text += f"\n{message}"
-        self.root.children[0].children[0].scroll_y = 0  # Upraven index kvůli nové struktuře
+        self.root.children[0].children[0].scroll_y = 0
 
     def open_folder_menu(self, instance):
         if not os.path.exists(self.output_dir):
